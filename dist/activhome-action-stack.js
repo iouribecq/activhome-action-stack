@@ -1,4 +1,4 @@
-// Activhome Action Stack - v0.1.3 (no-build, dependency-free)
+// Activhome Action Stack - v0.1.4 (no-build, dependency-free)
 // Type: custom:activhome-action-stack
 //
 // Goal:
@@ -703,6 +703,11 @@
             transition: background-color 120ms ease;
             color: var(--primary-text-color); /* ✅ force white icons (avoid HA default blue) */
           }
+          .buttonPressAction ha-icon{
+            --mdc-icon-size: 32px;
+            width: 32px;
+            height: 32px;
+          }
           .actionBtn:hover{ background: color-mix(in oklab, currentColor 12%, transparent); }
           .actionBtn:active{ background: color-mix(in oklab, currentColor 18%, transparent); }
           .actionBtn[disabled]{ cursor: default; opacity: 0.35; }
@@ -848,7 +853,7 @@
                  <ha-icon icon="${entityOn ? "mdi:stop" : "mdi:play"}"></ha-icon>
                </button>`
             : isButton
-              ? `<button class="actionBtn" data-action="button-press" aria-label="Appuyer" tabindex="-1" type="button">
+              ? `<button class="actionBtn buttonPressAction" data-action="button-press" aria-label="Appuyer" tabindex="-1" type="button">
                    <ha-icon icon="mdi:gesture-tap"></ha-icon>
                  </button>`
               : `<button class="actionBtn" data-action="power" aria-label="Power" tabindex="-1" type="button">
