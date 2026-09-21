@@ -1,4 +1,4 @@
-// Activhome Action Stack - v0.1.2 (no-build, dependency-free)
+// Activhome Action Stack - v0.1.3 (no-build, dependency-free)
 // Type: custom:activhome-action-stack
 //
 // Goal:
@@ -8,7 +8,7 @@
 //
 // Config:
 //   items (required): array of rows
-//     - entity (required): switch.xxx | input_boolean.xxx | script.xxx
+//     - entity (required): switch.xxx | input_boolean.xxx | script.xxx | button.xxx
 //     - name (optional)
 //     - animate_active (optional): animate icon while entity is active
 //     - animation_duration (optional): duration of one rotation in seconds (0.2..5, default 1)
@@ -493,6 +493,11 @@
       this._hass?.callService("script", "turn_on", { entity_id: scriptEntity });
     }
 
+    _pressButton(entityId) {
+      if (!entityId) return;
+      this._hass?.callService("button", "press", { entity_id: entityId });
+    }
+
     _stopScript(scriptEntity, stopScript = "") {
       if (!scriptEntity) return;
       const customStop = String(stopScript || "").trim();
@@ -795,6 +800,7 @@
         const stateObj = hass?.states?.[entityId];
         const domain = entityId.split(".")[0];
         const isScript = domain === "script";
+        const isButton = domain === "button";
         const icon = _normalizeIcon(it?.icon);
         const powerService = (it?.power_service || "").trim();
         const stopScript = (it?.stop_script || "").trim();
@@ -813,7 +819,7 @@
           entityId;
 
         // Keep per-entity metadata for incremental updates
-        this._itemMeta.set(entityId, { icon, powerService, activeStates, stopScript, animateActive, animationDuration, isScript });
+        this._itemMeta.set(entityId, { icon, powerService, activeStates, stopScript, animateActive, animationDuration, isScript, isButton });
 
         const entityOn = activeStates.includes(stateObj?.state);
 
@@ -841,9 +847,13 @@
             ? `<button class="actionBtn ${entityOn ? "playRunning" : ""}" data-action="script-toggle" aria-label="${entityOn ? "Stop" : "Play"}" tabindex="-1" type="button">
                  <ha-icon icon="${entityOn ? "mdi:stop" : "mdi:play"}"></ha-icon>
                </button>`
-            : `<button class="actionBtn" data-action="power" aria-label="Power" tabindex="-1" type="button">
-                 <ha-icon icon="mdi:power-standby"></ha-icon>
-               </button>`}
+            : isButton
+              ? `<button class="actionBtn" data-action="button-press" aria-label="Appuyer" tabindex="-1" type="button">
+                   <ha-icon icon="mdi:gesture-tap"></ha-icon>
+                 </button>`
+              : `<button class="actionBtn" data-action="power" aria-label="Power" tabindex="-1" type="button">
+                   <ha-icon icon="mdi:power-standby"></ha-icon>
+                 </button>`}
         `;
 
         // Setup entity icon
@@ -914,6 +924,11 @@
           if (action === "script-toggle") {
             if (entityOn) this._stopScript(entityId, stopScript);
             else this._playScript(entityId);
+            return;
+          }
+
+          if (action === "button-press") {
+            this._pressButton(entityId);
             return;
           }
 
@@ -1104,10 +1119,10 @@
             <div class="sectionTitle">Items</div>
             <div class="items" id="items"></div>
             <div style="margin-top:10px;">
-              <button id="add">+ Ajouter un switch</button>
+              <button id="add">+ Ajouter une action</button>
             </div>
             <div class="hint" style="margin-top:6px;">
-              Chaque item crée une ligne "Switch Panel" (icône + nom + play optionnel + power).
+              Chaque item crée une ligne d’action (switch, input_boolean, script ou button).
             </div>
           </div>
 
@@ -1415,7 +1430,7 @@ if (!merged.style) merged.style = "transparent";
               name: "entity",
               label: "Entité",
               required: true,
-              selector: { entity: { domain: ["switch", "input_boolean", "script"] } }
+              selector: { entity: { domain: ["switch", "input_boolean", "script", "button"] } }
             },
             { name: "name", label: "Nom affiché (optionnel)", selector: { text: {} } },
             { name: "animate_active", label: "Animer l’icône lorsque l’entité est active", selector: { boolean: {} } },
@@ -1528,7 +1543,7 @@ if (!merged.style) merged.style = "transparent";
 
         const it = items[idx] || {};
         form.schema = [
-          { name: "entity", label: "Entité", required: true, selector: { entity: { domain: ["switch", "input_boolean", "script"] } } },
+          { name: "entity", label: "Entité", required: true, selector: { entity: { domain: ["switch", "input_boolean", "script", "button"] } } },
           { name: "name", label: "Nom affiché (optionnel)", selector: { text: {} } },
           { name: "animate_active", label: "Animer l’icône lorsque l’entité est active", selector: { boolean: {} } },
           ...(it.animate_active === true ? [{ name: "animation_duration", label: "Durée d’un tour (secondes)", selector: { number: { min: 0.2, max: 5, step: 0.1, mode: "box", unit_of_measurement: "s" } } }] : []),
@@ -1571,7 +1586,7 @@ if (!merged.style) merged.style = "transparent";
     window.customCards.push({
       type: "activhome-action-stack",
       name: "Activhome Action Stack",
-      description: "Stack vertical d’actions : switch, input_boolean et script",
+      description: "Stack vertical d’actions : switch, input_boolean, script et button",
     });
   }
 })();
